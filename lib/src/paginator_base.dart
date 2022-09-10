@@ -14,6 +14,8 @@ class PaginatedData<T> with _$PaginatedData<T> {
     Uri? nextPage,
     Uri? previousPage,
   }) = _PaginatedData;
+
+  factory PaginatedData.empty() => PaginatedData(0, 0, [], 0);
 }
 
 mixin Paginator<T> {
@@ -30,11 +32,12 @@ mixin Paginator<T> {
   }
 
   Future<PaginatedData<T>> paginateNextPage(PaginatedData<T> currentData,
-      Future<PaginatedData<T>> Function() delegate) async {
+      Future<PaginatedData<T>> Function(Uri url) delegate) async {
     if (currentData.nextPage != null &&
         currentData.page < (currentData.totalRecords / currentData.size)) {
       int nextPageNumber = currentData.page + 1;
-      final newPagedData = await delegate();
+      final url = currentData.nextPage!;
+      final newPagedData = await delegate(url);
       if (newPagedData.page == nextPageNumber) {
         currentData = appendUpdate(currentData, newPagedData);
       }
