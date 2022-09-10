@@ -18,26 +18,32 @@ class PaginatedData<T> with _$PaginatedData<T> {
   factory PaginatedData.empty() => PaginatedData(0, 0, [], 0);
 }
 
-mixin Paginator<T> {
-  Future<PaginatedData<T>> paginatePreviousPage(PaginatedData<T> currentData,
-      Future<PaginatedData<T>> Function() delegate) async {
-    if (currentData.previousPage != null && currentData.page >= 0) {
-      int previousPageNumber = currentData.page - 1;
-      final newPagedData = await delegate();
-      if (newPagedData.page == previousPageNumber) {
-        currentData = appendUpdate(currentData, newPagedData);
-      }
-    }
-    return currentData;
-  }
+abstract class PaginatorService<T> {
+  Future<PaginatedData<T>> paginate(int page, {int size = 2});
+}
 
-  Future<PaginatedData<T>> paginateNextPage(PaginatedData<T> currentData,
-      Future<PaginatedData<T>> Function(Uri url) delegate) async {
+class ApiService implements PaginatorService {
+  @override
+  Future<PaginatedData<String>> paginate(int page, {int size = 2}) async {
+    return PaginatedData(1, 2, ["John", "Ali"], 10);
+  }
+}
+
+void main() {
+  final paginator = Paginator<String>(ApiService());
+  paginator.paginateNextPage();
+}
+
+class Paginator<T> {
+  Paginator(this.service);
+  final PaginatorService<T> service;
+  PaginatedData<T> currentData = PaginatedData.empty();
+
+  Future<PaginatedData<T>> paginateNextPage() async {
     if (currentData.nextPage != null &&
         currentData.page < (currentData.totalRecords / currentData.size)) {
       int nextPageNumber = currentData.page + 1;
-      final url = currentData.nextPage!;
-      final newPagedData = await delegate(url);
+      PaginatedData<T> newPagedData = await service.paginate(nextPageNumber);
       if (newPagedData.page == nextPageNumber) {
         currentData = appendUpdate(currentData, newPagedData);
       }
